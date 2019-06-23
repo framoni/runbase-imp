@@ -55,6 +55,13 @@ while flag == False:
         # look for events
         flag = "MONDAY HEROES" in innerHTML
 
+# click on sign in button
+button_access = browser.find_element_by_xpath('//*[@title="Accedi"]').click()
+# login
+browser.find_element_by_id('email').send_keys(td['email'])
+browser.find_element_by_id('password').send_keys(td['pass'])
+button_signin = browser.find_element_by_xpath('//*[@title="Invia"]').click()
+
 try:
     # click on event button
     button_event = browser.find_element_by_xpath('//div[contains(.//div//h3, "MONDAY HEROES") and contains(., "CON spogliatoio")]/child::button')
@@ -68,9 +75,22 @@ finally:
     input()
     browser.quit()
 
+try:
+    # click on event button
+    button_event = browser.find_element_by_xpath('//div[contains(.//div//h3, "ROAD TO YOUR BEST") and contains(., "CON spogliatoio")]/child::button')
+    button_event.click()
+    # click on event button
+    button_signup = browser.find_element_by_xpath('//*[@title="Iscriviti"]').click()
+except:
+    # print("Button not found!")
+    pass
+finally:
+    input()
+    browser.quit()
+
 # send a SMS to notify
-# for tag in tree.xpath('//div[@class="description-2dxZCuD"]//h3'):
-#     if 'MONDAY HEROES' in tag.text_content() or 'ROAD TO YOUR BEST' in tag.text_content():
-#         # send SMS alarm
-#         client = Client(td['twilio_client'], td['twilio_token'])
-#         client.messages.create(to=td['phone_to'], from_=td['phone_from'], body=message)
+for tag in tree.xpath('//div[@class="description-2dxZCuD"]//h3'):
+    if 'MONDAY HEROES' in tag.text_content() or 'ROAD TO YOUR BEST' in tag.text_content():
+        # send SMS alarm
+        client = Client(td['twilio_client'], td['twilio_token'])
+        client.messages.create(to=td['phone_to'], from_=td['phone_from'], body=message)
