@@ -2,7 +2,7 @@
 
 RUNBASE-IMP
 
-HTML scraping bot for monitoring Adidas events
+HTML scraping bot for monitoring Adidas Runners events
 
 Author: Francesco Ramoni
         francesco[dot]ramoni@email.it
