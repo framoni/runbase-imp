@@ -1,0 +1,1 @@
+{"email": "<adidas user email>", "pass": "<adidas user password>", "twilio_client": "<twilio client id>", "twilio_token": "<twilio token>", "phone_to": "<destination phone number>", "phone_from": "<source phone mumber>"} 
