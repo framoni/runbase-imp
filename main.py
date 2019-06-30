@@ -24,7 +24,7 @@ url = 'https://www.adidas.it/adidasrunners/community/milano'
 user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
 # message
-message = 'Le iscrizioni agli eventi Adidas di questa settimana sono aperte. runbase-imp'
+message = 'Le iscrizioni agli eventi Adidas di questa settimana sono state effettuate. runbase-imp'
 
 # twilio data
 with open("runbase-imp-param.json") as j:
@@ -35,62 +35,78 @@ with open("runbase-imp-param.json") as j:
 options = webdriver.ChromeOptions()
 # options.add_argument('headless')
 options.add_argument(f'user-agent={user_agent}')
-options.add_argument('incognito')
+# options.add_argument('incognito')
 
-# create a new webdriver and scrape HTML until events are found
-flag = False
-attempt = 1
-while flag == False:
-    try:
-        browser.quit()
-    except:
-        pass
-    print("Attempt ", attempt)
-    attempt += 1
-    browser = webdriver.Chrome(chrome_options=options)
-    browser.get(url)
-    innerHTML = browser.execute_script("return document.body.innerHTML")
-    with open("content.txt", "w") as f:
-        f.write(innerHTML)
-        # look for events
+# CODE
+
+# function to scrape events page until events are found
+def scrape_for_events():
+    print("Scraping HTML... ")
+    flag = False
+    while flag == False:
+        try:
+            browser.quit()
+        except:
+            pass
+        browser = webdriver.Chrome(chrome_options=options)
+        browser.get(url)
+        innerHTML = browser.execute_script("return document.body.innerHTML")
         flag = "MONDAY HEROES" in innerHTML
+    return browser
 
-# click on sign in button
-button_access = browser.find_element_by_xpath('//*[@title="Accedi"]').click()
+# function to login to the portal
+def login(browser):
+    print("Logging in... ")
+    # click on login button
+    button_access = browser.find_element_by_xpath('//*[@title="Accedi"]')
+    browser.execute_script("arguments[0].click();", button_access)
+    # send username, password and confirm
+    browser.find_element_by_id('email').send_keys(td['email'])
+    browser.find_element_by_id('password').send_keys(td['pass'])
+    button_signin = browser.find_element_by_xpath('//*[@title="Invia"]')
+    browser.execute_script("arguments[0].click();", button_signin)
+    return browser
+
+# scrape the events page
+browser = scrape_for_events()
 # login
-browser.find_element_by_id('email').send_keys(td['email'])
-browser.find_element_by_id('password').send_keys(td['pass'])
-button_signin = browser.find_element_by_xpath('//*[@title="Invia"]').click()
+browser = login(browser)
 
-try:
-    # click on event button
-    button_event = browser.find_element_by_xpath('//div[contains(.//div//h3, "MONDAY HEROES") and contains(., "CON spogliatoio")]/child::button')
-    button_event.click()
-    # click on event button
-    button_signup = browser.find_element_by_xpath('//*[@title="Iscriviti"]').click()
-except:
-    # print("Button not found!")
-    pass
-finally:
-    input()
-    browser.quit()
+print("Signing up to the events... ")
+# click on event button
+event_url = browser.find_element_by_xpath('//a[contains(div//div//h3, "MONDAY HEROES") and contains(., "SENZA spogliatoio")]').get_attribute("href")
+while True:
+    try:
+        browser.get(event_url)
+        button_signup = browser.find_element_by_xpath('//*[@title="Iscriviti"]')
+        browser.execute_script("arguments[0].click();", button_signup)
+        break
+    except Exception as e:
+         print(e)
+         continue
 
-try:
-    # click on event button
-    button_event = browser.find_element_by_xpath('//div[contains(.//div//h3, "ROAD TO YOUR BEST") and contains(., "CON spogliatoio")]/child::button')
-    button_event.click()
-    # click on event button
-    button_signup = browser.find_element_by_xpath('//*[@title="Iscriviti"]').click()
-except:
-    # print("Button not found!")
-    pass
-finally:
-    input()
-    browser.quit()
+browser.quit()
+
+# rescrape the events page
+browser = scrape_for_events()
+# login
+browser = login(browser)
+
+# find the second event
+event_url = browser.find_element_by_xpath('//a[contains(div//div//h3, "ROAD TO YOUR BEST") and contains(., "SENZA spogliatoio")]').get_attribute("href")
+while True:
+    try:
+        browser.get(event_url)
+        button_signup = browser.find_element_by_xpath('//*[@title="Iscriviti"]').click()
+    except:
+         continue
+    else:
+         break
+
+print("Notifying via SMS... ")
 
 # send a SMS to notify
-for tag in tree.xpath('//div[@class="description-2dxZCuD"]//h3'):
-    if 'MONDAY HEROES' in tag.text_content() or 'ROAD TO YOUR BEST' in tag.text_content():
-        # send SMS alarm
-        client = Client(td['twilio_client'], td['twilio_token'])
-        client.messages.create(to=td['phone_to'], from_=td['phone_from'], body=message)
+client = Client(td['twilio_client'], td['twilio_token'])
+client.messages.create(to=td['phone_to'], from_=td['phone_from'], body=message)
+
+print("Job done. ")
